@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Results — Data Stack Diagnostic</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Instrument+Serif&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a1a1a;line-height:1.6;-webkit-font-smoothing:antialiased;padding:0;margin:0}
+  .wrap{width:100%;padding:32px 40px}
+  .mono{font-family:'DM Mono',monospace}
+  .serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400}
+  .dim-head{display:flex;align-items:baseline;gap:14px;margin-bottom:20px}
+  .dim-num{font-size:11px;letter-spacing:0.14em;color:#B68D40;text-transform:uppercase;font-weight:500}
+  .dim-title{font-size:28px;color:#1a1a1a;letter-spacing:-0.01em}
+  .cards{display:flex;flex-direction:column;gap:10px}
+  .card{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:20px 24px;transition:all 0.25s}
+  .card.answered{background:#fdf8f0;border-color:#e8dcc8}
+  .card-text{font-size:14px;line-height:1.7;color:#444;margin-bottom:16px}
+  .btns{display:flex;gap:8px}
+  .btn{flex:1;padding:11px 6px;border:1.5px solid #e0e0e0;border-radius:8px;background:#fff;color:#999;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+  .btn:hover{border-color:#bbb;color:#666}
+  .btn.sel{border-color:#1a1a1a;background:#1a1a1a;color:#fff;font-weight:600}
+  .btn .n{font-size:17px;font-weight:600}
+  .score-line{margin-top:24px;display:none;align-items:center;gap:12px;animation:fadeUp 0.4s ease}
+  .score-line.show{display:flex}
+  .score-num{font-size:42px;font-weight:500;letter-spacing:-0.02em}
+  .score-of{font-size:14px;color:#bbb}
+  .score-flag{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:5px;font-weight:500}
+  .flag-warn{background:#fef3ee;color:#C45B28}
+  .flag-ok{background:#eef7f2;color:#2D6A4F}
+  .progress-dots{display:flex;gap:6px;margin-top:20px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#e4e4e4;transition:background 0.3s}
+  .dot.filled{background:#1a1a1a}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @media(max-width:600px){.wrap{padding:24px 20px}.dim-title{font-size:24px}.dim-head{flex-direction:column;gap:2px}}
+</style>
+<style>
+  .results-hero { text-align: center; margin-bottom: 48px; padding-top: 8px; }
+  .results-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: #aaa; margin-bottom: 12px; }
+  .results-big { font-size: 80px; line-height: 1; letter-spacing: -0.03em; }
+  .results-of { font-size: 15px; color: #bbb; margin-top: 6px; }
+  .stage-card { border: 1.5px solid #e8e4df; border-radius: 14px; padding: 36px; margin-bottom: 40px; background: #fafafa; }
+  .stage-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+  .stage-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; }
+  .stage-name { font-size: 36px; color: #1a1a1a; }
+  .stage-desc { font-size: 15px; line-height: 1.8; color: #666; margin-bottom: 24px; }
+  .move-box { background: #fff; padding: 20px 24px; border-radius: 10px; border: 1px solid #eee; }
+  .move-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #aaa; margin-bottom: 8px; }
+  .move-text { font-size: 14px; line-height: 1.8; color: #444; }
+  .rank-title { font-size: 22px; color: #1a1a1a; margin-bottom: 20px; }
+  .rank-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 44px; }
+  .rank-item { display: flex; align-items: center; gap: 16px; padding: 14px 20px; background: #fafafa; border-radius: 10px; border: 1px solid #eee; }
+  .rank-item.hot { border-color: #f0d5c4; background: #fef8f5; }
+  .rank-sc { font-size: 24px; font-weight: 600; min-width: 38px; }
+  .rank-name { flex: 1; font-size: 14px; color: #444; }
+  .rank-bar-bg { width: 140px; height: 5px; background: #eee; border-radius: 3px; overflow: hidden; }
+  .rank-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.25,0.46,0.45,0.94); }
+  .cta-block { background: #1a1a1a; border-radius: 14px; padding: 36px; margin-bottom: 32px; }
+  .cta-text { font-size: 15px; line-height: 1.8; color: #bbb; margin-bottom: 12px; }
+  .cta-case { font-size: 13px; color: #777; font-style: italic; margin: 18px 0; line-height: 1.75; }
+  .cta-link { display: inline-block; padding: 14px 32px; background: #fff; color: #1a1a1a; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: opacity 0.2s; }
+  .cta-link:hover { opacity: 0.85; }
+  .retake { display: block; margin: 0 auto; padding: 10px 24px; background: none; border: 1px solid #ddd; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #999; cursor: pointer; }
+  .retake:hover { border-color: #aaa; color: #666; }
+  .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+  .empty-state p { font-size: 15px; line-height: 1.7; }
+  @media (max-width: 600px) { .results-big { font-size: 56px; } .stage-card, .cta-block { padding: 24px; } .rank-bar-bg { width: 80px; } }
+</style>
+</head><body>
+<div class="wrap" id="top">
+  <div id="content"></div>
+</div>
+
+<script>
+const DIM_NAMES = ['Metric Alignment','Dashboard Trust','Data Team Focus','Data Accessibility','Role Clarity','Tool-Decision Ratio','CEO Data Fluency'];
+
+// Higher displayed score = better. Stage 1 = worst, Stage 4 = best.
+const STAGES = [
+  { min:28, max:44, name:"Flying Blind", num:1, color:"#9B2226",
+    desc:"You are making material business decisions with data you can't trust, can't access quickly, and can't agree on across teams. This isn't a data team problem — it's a business risk.",
+    move:"Stop adding tools or dashboards. Start with three conversations: (1) CEO decision audit (2) Metric alignment — one definition per KPI (3) Data team reset — infrastructure scope, not service desk." },
+  { min:45, max:64, name:"Fragmented", num:2, color:"#C45B28",
+    desc:"You have the pieces — tools, people, dashboards — but they don't connect into a system. Different teams operate on different versions of reality.",
+    move:"You need a unifying layer: both technical (a minimum viable warehouse) and organizational (metric definitions, decision registry, clear data team scope). This is a 90-day fix, not a 12-month transformation." },
+  { min:65, max:84, name:"Reactive", num:3, color:"#B68D40",
+    desc:"This is where most $3–20M ARR companies live. You have data infrastructure and some good practices, but the system responds to problems rather than preventing them.",
+    move:"Build a Decision Registry. Map every active data project to a decision on it. Kill or pause the rest. This single act converts your data team from reactive to strategic." },
+  { min:85, max:112, name:"Structured", num:4, color:"#2D6A4F",
+    desc:"Your fundamentals are sound. Focus on decision speed: how fast can data move from question to answer to action? Your risk isn't chaos, it's complacency.",
+    move:"Audit decision latency. Pick your CEO's three most frequent decisions. Measure how long it takes to get the data needed for each. Reduce that by 50%." }
+];
+
+function getStage(t) {
+  for (const s of STAGES) if (t >= s.min && t <= s.max) return s;
+  return t < 28 ? STAGES[0] : STAGES[3];
+}
+
+function render() {
+  const el = document.getElementById('content');
+  const dimScores = [];
+  let rawTotal = 0;
+  let complete = true;
+
+  for (let d = 1; d <= 7; d++) {
+    const raw = localStorage.getItem('vd_dim_' + d);
+    if (!raw) { complete = false; dimScores.push({ name: DIM_NAMES[d-1], score: 0, rawScore: 0, missing: true }); continue; }
+    try {
+      const obj = JSON.parse(raw);
+      const rawSc = Object.values(obj).reduce((a,b)=>a+b,0);
+      const showSc = 20 - rawSc;
+      dimScores.push({ name: DIM_NAMES[d-1], score: showSc, rawScore: rawSc, missing: false });
+      rawTotal += rawSc;
+    } catch(e) {
+      complete = false;
+      dimScores.push({ name: DIM_NAMES[d-1], score: 0, rawScore: 0, missing: true });
+    }
+  }
+
+  if (!complete) {
+    const done = dimScores.filter(d => !d.missing).length;
+    el.innerHTML = `
+      <div class="empty-state">
+        <p class="serif" style="font-size:28px;color:#1a1a1a;margin-bottom:16px">Not quite there yet</p>
+        <p>${done} of 7 dimensions completed.<br>Finish all sections above to see your results.</p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:24px">
+          ${dimScores.map(d => `<div style="width:10px;height:10px;border-radius:50%;background:${d.missing ? '#e4e4e4' : '#1a1a1a'}"></div>`).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  const total = 140 - rawTotal;
+  // Rank by severity: lowest displayed score = worst = show first
+  const ranked = [...dimScores].sort((a,b) => a.score - b.score);
+  const stage = getStage(total);
+
+  const ctaText = total <= 64
+    ? "Your score suggests structural issues that compound over time. This is the stage where a Fractional CDO engagement typically pays for itself fastest."
+    : ranked[0].score <= 10
+    ? `Your biggest exposure is ${ranked[0].name}. The templates in the full diagnostic are designed to address exactly this.`
+    : "Your stack is in reasonable shape. Focus on decision speed and keep the foundations solid.";
+
+  let h = '';
+
+  h += `<div class="results-hero">
+    <p class="mono results-label">Your Data Stack Score</p>
+    <div class="serif results-big" style="color:${stage.color}">${total}</div>
+    <p class="mono results-of">/ 112</p>
+  </div>`;
+
+  h += `<div class="stage-card" style="border-color:${stage.color}40">
+    <div class="stage-head">
+      <span class="mono stage-tag" style="color:${stage.color}">Stage ${stage.num}</span>
+      <h3 class="serif stage-name">${stage.name}</h3>
+    </div>
+    <p class="stage-desc">${stage.desc}</p>
+    <div class="move-box">
+      <p class="mono move-label">Your move</p>
+      <p class="move-text">${stage.move}</p>
+    </div>
+  </div>`;
+
+  h += `<h3 class="serif rank-title">Dimensions, ranked by severity</h3>`;
+  h += `<div class="rank-list">`;
+  ranked.forEach(d => {
+    const hot = d.score <= 10;
+    const color = hot ? '#C45B28' : '#2D6A4F';
+    h += `<div class="rank-item ${hot?'hot':''}">
+      <span class="mono rank-sc" style="color:${color}">${d.score}</span>
+      <span class="rank-name">${d.name}</span>
+      <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${(d.score/16)*100}%;background:${color}"></div></div>
+    </div>`;
+  });
+  h += `</div>`;
+
+  h += `<div class="cta-block">
+    <p class="cta-text">${ctaText}</p>`;
+  if (total <= 84) {
+    h += `<p class="cta-case">The companies I work with typically move up one stage in 8–12 weeks: unified metrics, a decision-driven dashboard, and a data team that knows what they're building and why.</p>`;
+    h += `<a class="cta-link" href="https://calendly.com/nick-valiotti/discovery-call-nick?utm_source=leadmagnet&utm_medium=fractionalcdo&utm_campaign=diagnostic" target="_blank" rel="noopener">Book a 30-minute diagnostic call →</a>`;
+  }
+  h += `</div>`;
+
+  h += `<button class="retake" onclick="clearAll()">Retake diagnostic</button>`;
+
+  el.innerHTML = h;
+}
+
+function clearAll() {
+  for (let d = 1; d <= 7; d++) localStorage.removeItem('vd_dim_' + d);
+  render();
+}
+
+render();
+window.addEventListener('focus', render);
+window.addEventListener('storage', render);
+</script>
+</body></html>
